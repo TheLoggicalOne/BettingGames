@@ -1,58 +1,76 @@
-# Betting Games
-Betting Game is a two player zero-sum imperfect information game. It can be seen as a simplified model for one street of
-heads up betting in poker. Betting Games can be seen as a general 
-case of 'Kuhn Poker':
-Actually BettingGame(BetSize=0.5, max_number_of_bets=2, deck = {J, Q, K}, deal_from_deck_with_substitution=True) is 
-exactly Kuhn Poker. 
+# Betting Game: Optimal Strategies and Its Applications 
+The goal of this project is to solve Betting Game and use this game and its solution and optimal strategies to model and  
+analyze other games and problems, specifically poker games. More specifically this project will provide:
+- [**Game description and representation**](#betting-game)
+- **API for the Betting Game**      
+- **Efforts To Solve The Betting Game** 
+  - **Counterfactual regret minimization algorithms efficient implementations for Betting Games**
+- **Applying Betting Game in Other problems and games**  
+This is undergoing project with undergoing research behind it. The Table of Contents and Road Map will be dynamically  
+updated.
 
-## Betting Game description in conventional poker term:
-Each player put 1 **'chip'** in the **'pot'**, which is unit of money in the game.
+## Betting Game
+Betting Game is a two player zero-sum imperfect information game. It can be seen as a simplified model for one street of  
+heads up betting in poker. Betting Games can be seen as a general case of 
+[**Kuhn Poker**](https://en.wikipedia.org/wiki/Kuhn_poker). Actually Kuhn Poker is exactly  
+equivalent to following game:  
+```python
+J=1; Q=2; K=3
+BettingGame(BetSize=0.5, max_number_of_bets=2, deck={J:1, Q:1, K:1}, deal_from_deck_with_substitution=False)
+```  
+where `J=1, Q=2, K=3` are respectively equivalent to *'Jack'*, *'Queen'* and *'King'* in Kuhn Poker.  
+### Betting Game description in conventional poker term:
+In this game, similar to other variants of poker, players bet on strength of their hand, if they agree on same amount of  
+bet, they go to showdown, which they show their hand and the stronger(higher) hand will win all the money. If one  
+player does not agree to increase of bet by other player, he will lose all the bets that he has put in the pot so far in  
+that round.    
+We divide game procedure into 4 steps, note that players only make decision at step 3, which is betting round.
 
-Each player is dealt a **'hand'** from the **'deck'** with specified given **'distribution'** which is usually uniform. 
+1. **Posting Blinds(putting forced bets in the put):**  Each player put 1 **'chip'** in the **'pot'**. **chip** is unit of  
+   money in the game.    
 
-Then player go to one round of betting, similar to one street of betting in poker. With two important difference:
-First there is only one bet size allowed. (Note that sizes are in relation to pot size). Second there is a limit on max 
-number of bets possible. (with bet size being fix, this is equivalent to having a limit on the **'stack'** of players). 
-
-**'deck'** in this game is set of numbers: {1, 2, ..., m}. Players deck might be different, it might be equal but 
-physically 
-
-**'dealing cards'**: is this each player draw his hand randomly according to given distribution which is usually uniform
-**'Showdown'**: player holding the hand with higher number wins
+   
+2. **Dealing Hands:** Each player is dealt a **'hand'** from the **'deck'** with specified given **'distribution'**  
+   which is usually uniform distribution.  
+   In NL deck of cards is 52 standard deck of cards and player hands are dealt as 2 combo of this deck and there is also  
+   3 more step of dealing 'community cards' which affect the strength and relative strength of players hand.
 
 
-## Our Model:
-We consider the extensive form representation of this game. 
-
-#### node:
-By node we actually mean 'public state'  which is actually same public representation of decision nodes in 
-BettingGames(also many other games like poker and its variants). Note that public representation of decision points 
-means representation of decision points based on information that is available publicly to anyone.
+3. **One Round Of Betting:** players go to one round of betting, which is similar to one street of betting in poker  
+   , with two important differences:  
+   First there is only one bet size allowed. (Note that sizes are in relation to pot size).  
+   Second there is a limit on max number of bets allowed. (with bet size being fix, this condition is equivalent to having  
+   a limit on the **'stack'** of players). 
 
 
-## Possible approaches to modeling and analyzing the Betting Game:
- we are working on G = BettingGame(n) and T is its BF tree....Also let say we have m possible different hand
- this game has 3n+3 nodes.
- n+2 of them are decision nodes. First 2 and last 2 decision node has 2 choices. n-2 other ones have 3 choices
- For now let say n=12:
- Strategy can be seen as:
- 1)Pure Strategies(PS): For each possible holding hand we should decide:
- As OP: What do you want your last raise make the 2*R+B ? ( assuming opponent is coming!) What is your action in case
- Opponent passed your 2*R+B? call or fold?
- Therefore, for each possible holding hand for OP there [(n/2)+1]*2=n+2 choices. For n=12: 14 -- For n=4: 6 -- For n=6:8
- As IP: Facing Bet: Go for Max 2R =< n/2. Call or Fold in case opponent passed your Max 2*R
- As IP: Facing Check: Go for Max 2R+B =< n/2 . all or Fold in case opponent passed your Max 2*R+B
- Therefore for each possible holding hand for IP there [(n/2)+1]*2=n+2 choices. For n=12: 14 -- For n=4: 6 -- For n=6:8
- So Total Number Of Pure Strategies for each position  Is: (n+2)^m
- For n=2,m=10: 10^6 -- For n=4,m=10: 6*10^7 -- For n=6,m=10: 10^9
- 2) Mixed Strategies: Probabilistic weighted combo of Pure Strategies
- Important question: Each Pure Strategy ps: (Pstate, Hand) ---> Action. i.e:
- 3) Behavioral Strategy: On each Istate = (Pstate, Hand) determines distribution over possible actions
- Finally, How should we define Strats pure or behavioral or mixed?
- We could construct them as a tree of table, and work with them. Which one is better?
- One idea is to consider behavioral strats as tree to fully use tree structure of the game
- Can we do everything in terms of matrix and np arrays?
- C(5,3)=10 -- C(8,3)=56 -- C(10,3)=120 -- C(20,3)=1140 --
- Monte Carlo Tree Search:
- See your action as Fold/Check, Bet/Call, Raise cut offs
+4. **Showdown**: player cards(or hands) are just number, at showdown player with higher number will win the whole pot.  
+   if both player have the same hand(equal number), they will split the pot equally.
 
+#### Dealing Cards and Deck
+**'deck'** in this game is usually a **'hyper set'** of numbers, which can be presented by a dictionary in python:  
+`deck = {a_i:x_i for i in range(1, m)}`   
+where dictionary keys `a_i, for i=1,2, ...,m` show different possible cards(or hands) in the deck, and each dictionary  
+value `x_i` shows how many of card `a_i` we have in the deck.   
+Players might draw from the same common deck of cards ,  which is equivalent to  
+`BettingGame.deal_from_deck_with_substitution=False`
+
+Each player might have their own deck, but their deck are equal sets, this case is equivalent to:  
+BettingGame.deal_from_deck_with_substitution=True  
+Or they might have different decks.
+
+Although we usually consider player drawing their hand from decks of the form `{a_i:x_i for i in range(1,m)}` , the  
+mathematical definition of BettingGames deck is more general, and it presents both 'deck' and **'dealing cards'** at   
+same time using a joint distribution:  
+`(op_hand, ip_hand)` is drawn from given arbitrary joint distribution `P`, which is called dealing distribution or dd.  
+op_hand = out of position player hand (first player)  
+ip_hand = in position player hand (second player)
+
+#### Betting Game contrast with No limit Texas Holdem:
+The Betting Game Can be seen as No flop Poker with just one round of betting and one round of cards dealing from its  
+specific deck of cards. For more specific contrast we explain differences with most popular version of poker, No Limit  
+Texas Holdem or NL for simplicity:  
+In NL game has 4 streets, in each street there is some cards or **'community cards'** dealing and after that there is  
+one round of betting. In Betting Games, we only have one round of cards dealing from specific deck and just one round of  
+betting.  
+In NL, in the start of game one player put half chip('Small Blind), and other player put one chip(Big Blind), in Betting  
+Game both player start by putting same amount of forced bet into the pot.
