@@ -1,4 +1,4 @@
-""" This module cane be seen as Betting Game API. Here  we can create Betting Games with different specification
+""" This module can be seen as Betting Game API. Here  we can create Betting Games with different specification
 parameters. Betting Game Is a simplified model for one street of betting in poker. For more information about betting
 game see the ReadMe.md or the article. For general definition and description of the game see ReadMe-Game Description,
 for our specific representation of the game that is also used in this API see ReadMe-Game Representation
@@ -130,6 +130,6 @@ if __name__ == '__main__':
     x = State12(public_state=10, op_hand=95, ip_hand=70)
     H = [G.public_tree.common_ancestors_table[i][i] for i in G.public_tree.nodes]
     AH = [G.public_tree.history_of_node(i) for i in G.public_tree.nodes]
-
+    decision_states = [G.public_state[i] for i in G.public_tree.decision_nodes]
 
 

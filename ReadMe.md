@@ -6,7 +6,7 @@ analyze other games and problems, specifically poker games. More specifically th
 - [**Efforts To Solve The Betting Game**](#efforts-to-solve-the-betting-game)
   - **Counterfactual regret minimization efficient implementations for Betting Games**
 - **Applying Betting Game in other problems and games**  
-- 
+
 This is undergoing project with undergoing research behind it. The Table of Contents and Road Map will be dynamically  
 updated.
 
@@ -77,5 +77,7 @@ In NL, in the start of game one player put half chip('Small Blind), and other pl
 Game both player start by putting same amount of forced bet into the pot.
 
 ### Game Representation
+To Be Completed ...
 
 # Efforts To Solve The Betting Game
+To Be Completed ...
