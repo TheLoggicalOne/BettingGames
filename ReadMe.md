@@ -1,22 +1,24 @@
 # Betting Game: Optimal Strategies and Its Applications 
 The goal of this project is to solve Betting Game and use this game and its solution and optimal strategies to model and  
 analyze other games and problems, specifically poker games. More specifically this project will provide:
-- [**Game description and representation**](#betting-game)
-- **API for the Betting Game**      
-- **Efforts To Solve The Betting Game** 
-  - **Counterfactual regret minimization algorithms efficient implementations for Betting Games**
-- **Applying Betting Game in Other problems and games**  
+- [**Game description and representation**](#game-description-and-representation)
+- [**API for the Betting Game**](betting_games.py)      
+- [**Efforts To Solve The Betting Game**](#efforts-to-solve-the-betting-game)
+  - **Counterfactual regret minimization efficient implementations for Betting Games**
+- **Applying Betting Game in other problems and games**  
+- 
 This is undergoing project with undergoing research behind it. The Table of Contents and Road Map will be dynamically  
 updated.
 
-## Betting Game
+## Game description and representation
+### Game description
 Betting Game is a two player zero-sum imperfect information game. It can be seen as a simplified model for one street of  
 heads up betting in poker. Betting Games can be seen as a general case of 
 [**Kuhn Poker**](https://en.wikipedia.org/wiki/Kuhn_poker). Actually Kuhn Poker is exactly  
 equivalent to following game:  
 ```python
 J=1; Q=2; K=3
-BettingGame(BetSize=0.5, max_number_of_bets=2, deck={J:1, Q:1, K:1}, deal_from_deck_with_substitution=False)
+BettingGame(bet_size=0.5, max_number_of_bets=2, deck={J:1, Q:1, K:1}, deal_from_deck_with_substitution=False)
 ```  
 where `J=1, Q=2, K=3` are respectively equivalent to *'Jack'*, *'Queen'* and *'King'* in Kuhn Poker.  
 ### Betting Game description in conventional poker term:
@@ -24,17 +26,16 @@ In this game, similar to other variants of poker, players bet on strength of the
 bet, they go to showdown, which they show their hand and the stronger(higher) hand will win all the money. If one  
 player does not agree to increase of bet by other player, he will lose all the bets that he has put in the pot so far in  
 that round.    
-We divide game procedure into 4 steps, note that players only make decision at step 3, which is betting round.
+We divide game procedure into 4 steps(note that players only make decision at step 3, which is betting round).
 
 1. **Posting Blinds(putting forced bets in the put):**  Each player put 1 **'chip'** in the **'pot'**. **chip** is unit of  
    money in the game.    
 
    
 2. **Dealing Hands:** Each player is dealt a **'hand'** from the **'deck'** with specified given **'distribution'**  
-   which is usually uniform distribution.  
-   In NL deck of cards is 52 standard deck of cards and player hands are dealt as 2 combo of this deck and there is also  
-   3 more step of dealing 'community cards' which affect the strength and relative strength of players hand.
-
+   which is usually uniform distribution. Note that deck of Betting Game is totally different from poker, for more  
+   information see [Dealing Cards and Deck](#dealing-cards-and-deck)
+   
 
 3. **One Round Of Betting:** players go to one round of betting, which is similar to one street of betting in poker  
    , with two important differences:  
@@ -74,3 +75,7 @@ one round of betting. In Betting Games, we only have one round of cards dealing 
 betting.  
 In NL, in the start of game one player put half chip('Small Blind), and other player put one chip(Big Blind), in Betting  
 Game both player start by putting same amount of forced bet into the pot.
+
+### Game Representation
+
+# Efforts To Solve The Betting Game
