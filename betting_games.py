@@ -25,18 +25,14 @@ class BettingGame:
 
 
     Application and Usage:
-
-    self.public_tree : public_nodes_tree.PublicTree object, gives the public tree of the game and let you access
-        everything about public states and their tree structure through methods and attrs available in
-        public_nodes_tree.PublicTree class. For more info see public_nodes_tree.PublicTree documentation.
-
+    Most useful attributes:
     self.public_state: list, each public state as namedtuple is one element of this list , in order of their
         creation in breath_first tree. This light and fast representation of public states is actually a reference
         to public_node_tree.public_tree.create_PublicState_list()
         Let S=self.public_state, Then S[i] is public node i representation as namedtuple public_nodes_tree.PublicState()
         Fields of this namedtuple let us access almost every information about the node:
             S[i].node: int, equal to i, public node number or name
-            S[i].np_node: numpy.ndarray rep of node i
+            S[i].np_node: numpy.ndarray representation of node i
             S[i].actions: ordered list of actions available in node i
             S[i].children: ordered list of children of node i
             S[i].parent: parent of node i
@@ -46,20 +42,34 @@ class BettingGame:
             S[i].last_played_action: 'Check' or 'Call' or 'Bet' or 'Raise', showing The last played action that has led
              us to current node.
 
+    self.nodes: numpy.ndarray, list of public nodes
+
     self.next_node: numpy.ndarray, this np array makes moving from one state (public node) to its child easy and fast.
         i.e: self.next_node[i,j] shows the resulting node of taking action j at node i
 
-    self.first_common_ancestors: numpy 2D-array, self.first_common_ancestors[i][j] is a list containing all common nodes
+    some additional attributes:
+    self.first_common_ancestors: numpy.ndarray, self.first_common_ancestors[i, j] is a list containing all common nodes
         in the paths from StartNode to current nodes.
 
-    self.InfoState: create the raw namedtuple with fields public_states and hand, to create namedtuple representation of
-        InfoStates of game
+    self.history_of_node: list, element i shows action history of node i, showing actions as string
+
+    self.decision_public_state: list, shows all public states that are decision points in order
+
+    To access more information about public tree and nodes use this:
+    self.public_tree : public_nodes_tree.PublicTree object, gives the public tree of the game. In case you still need
+        more info about public tree and public states this let you access everything about public states and their tree
+        structure through methods and attrs available in public_nodes_tree.PublicTree class.
+        For more info see public_nodes_tree.PublicTree documentation.
+
+    Following attributes are just creating namedtuple types to be instantiated by corresponding methods:
     self.InfoNode: create the raw namedtuple with fields node and hand, to create namedtuple representation of
-        InfoNodes of game
+        InfoNodes of game. To populate this and actually create info nodes use method: indo_node
+    self.InfoState: create the raw namedtuple with fields public_states and hand, to create namedtuple representation of
+        InfoStates of game. To populate this and actually create info nodes use method: indo_state
     self.WorldNode: create the raw namedtuple with fields node and op_hand and ip_hand to create namedtuple
-        representation of WorldNodes of game
+        representation of WorldNodes of game. To populate this and actually create info nodes use method: world_node
     self.WorldState: create the raw namedtuple with fields public_states and op_hand and ip_hand to create namedtuple
-        representation of WorldStates of game
+        representation of WorldStates of game. To populate this and actually create info nodes use method: world_state
         """
 
     def __init__(self, max_number_of_bets,
@@ -84,6 +94,8 @@ class BettingGame:
 
         self.first_common_ancestors = np.array([[self.public_tree.common_ancestors(i, j)[-1] for i in self.nodes]
                                                 for j in self.nodes])
+        self.history_of_node = [self.public_tree.history_of_node(i) for i in self.nodes]
+        self.decision_public_state = [self.public_state[i] for i in self.public_tree.decision_nodes]
 
     def info_node(self, hand):
         """ Creates a list, i'th element of list is self.InfoNode(node=i, hand=hand), namedtuple representation of info
@@ -121,6 +133,12 @@ class BettingGame:
 
 # Start a Game
 if __name__ == '__main__':
+    # Creating Kuhn Poker
+    J = 1; Q = 2; K = 3
+    KUHN_BETTING_GAME = BettingGame(bet_size=0.5, max_number_of_bets=2,
+                                    deck={J: 1, Q: 1, K: 1}, deal_from_deck_with_substitution=False)
+
+    # Creating betting games with other sizes
     max_number_of_bets = 12
     G = BettingGame(max_number_of_bets)
     T = G.public_tree
