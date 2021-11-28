@@ -1,3 +1,4 @@
+# TO BE COMPLETED
 ## Game Procedure:
 players bet on strength of their hand, if they agree on same amount of bet, they go to showdown, which they show 
 their hand and the stronger(higher) hand will win the all the money. 
