@@ -36,14 +36,16 @@ Probabilistic weighted combo of Pure Strategies
  One idea is to consider behavioral strats as tree to fully use tree structure of the game
  Can we do everything in terms of matrix and np arrays?
  
+#### Another perspective to Strats
+**See your action as Fold/Check, Bet/Call, Raise cut-offs at each public nodes**
 C(5,3)=10 -- C(8,3)=56 -- C(10,3)=120 -- C(20,3)=1140 --
  Monte Carlo Tree Search:
  See your action as Fold/Check, Bet/Call, Raise cut-offs
  
 ##### Information Nodes and Information States
-**Number Of Information Nodes** is `n+2`
-**Number of Information States** is `(n+2)*m`
-**Number of World States** is `(n+2)*m^2`
+Number Of **Public Nodes** is `n+2`  
+Number of **Information States** is `(n+2)*m`  
+Number of **World States** is `(n+2)*m^2`  
 
 
 
