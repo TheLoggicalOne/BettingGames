@@ -1,3 +1,4 @@
+TO BE COMPLETED
 """ Can Each Strat just be a list of probs?
  Strat as list of  willingness probs of coming to public node k. Note that each public node k  has only one parent
  which is accessible by G.public_state[k].parent
