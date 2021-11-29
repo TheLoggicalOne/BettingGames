@@ -1,4 +1,4 @@
-# DOCUMANTATION AND COMMENTS TO BE COMPLETED
+# DOCUMENTATION AND COMMENTS TO BE COMPLETED
 import copy
 import numpy as np
 import numpy_representation_of_nodes as numpy_representation_of_nodes
