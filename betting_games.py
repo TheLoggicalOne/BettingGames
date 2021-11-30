@@ -6,6 +6,7 @@ for our specific representation of the game that is also used in this API see Re
 import numpy as np
 import public_nodes_tree as public_nodes_tree
 from collections import namedtuple
+from itertools import product
 from utilities import START_NODE
 
 
@@ -73,18 +74,29 @@ class BettingGame:
         """
 
     def __init__(self, max_number_of_bets,
-                 deck={i: 1 for i in range(100)},
+                 deck=None,
                  bet_size=1,
                  deal_from_deck_with_substitution=True):
+        if deck is None:
+            deck = {i: 1 for i in range(100)}
         self.max_number_of_bets = max_number_of_bets
         self.bet_size = bet_size
         self.deck = deck
         self.deal_from_deck_with_substitution = deal_from_deck_with_substitution
 
+# ------------------------------------ Public Tree, States, Nodes, play, history ------------------------------------- #
+
         self.public_tree = public_nodes_tree.PublicTree(START_NODE, self.max_number_of_bets)
         self.nodes = self.public_tree.nodes
         self.public_state = self.public_tree.create_PublicState_list()
         self.next_node = self.public_tree.create_next_node_table()
+
+        self.first_common_ancestors = np.array([[self.public_tree.common_ancestors(i, j)[-1] for i in self.nodes]
+                                                for j in self.nodes])
+        self.history_of_node = [self.public_tree.history_of_node(i) for i in self.nodes]
+        self.decision_public_state = [self.public_state[i] for i in self.public_tree.decision_nodes]
+
+# --------------------------- Base namedtuple for Information and World States and Nodes ----------------------------- #
 
         self.InfoNode = namedtuple('InfoNode' + str(self.max_number_of_bets), ['node', 'hand'])
         self.InfoState = namedtuple('InfoState' + str(self.max_number_of_bets), ['public_state', 'hand'])
@@ -92,10 +104,7 @@ class BettingGame:
         self.WorldState = namedtuple('State' + str(self.max_number_of_bets),
                                      ['public_state', 'op_hand', 'ip_hand'])
 
-        self.first_common_ancestors = np.array([[self.public_tree.common_ancestors(i, j)[-1] for i in self.nodes]
-                                                for j in self.nodes])
-        self.history_of_node = [self.public_tree.history_of_node(i) for i in self.nodes]
-        self.decision_public_state = [self.public_state[i] for i in self.public_tree.decision_nodes]
+# ---------------------------------------Information and World States and Nodes -------------------------------------- #
 
     def info_node(self, hand):
         """ Creates a list, i'th element of list is self.InfoNode(node=i, hand=hand), namedtuple representation of info
@@ -122,14 +131,21 @@ class BettingGame:
         return [self.WorldState(public_state=self.public_state[node], op_hand=op_hand, ip_hand=ip_hand)
                 for node in self.nodes]
 
+# ---------------------------------------------------Other Methods---------------------------------------------------- #
 
-# class OPPureStrategy:
-#    def __init__(self, Player, MaxTargetNumberOfBets, LastActionVsHigherThanTarget):
-#        pass
+    def cards_dealing(self):
+        number_of_cards = len(self.deck.keys())
+        cards = []
+        if self.deal_from_deck_with_substitution:
+            for key, value in self.deck.items():
+                for i in range(value):
+                    cards.append(key)
+        deck_of_paired_cards = list(product(cards, cards))
+        return deck_of_paired_cards
+
 
 
 # ------------------------------------ INITIALIZING BETTING GAMES WITH USUAL SIZES ----------------------------------- #
-
 
 # Start a Game
 if __name__ == '__main__':
