@@ -6,7 +6,7 @@ for our specific representation of the game that is also used in this API see Re
 import numpy as np
 import public_nodes_tree as public_nodes_tree
 from collections import namedtuple
-from itertools import product
+from itertools import product, permutations
 from utilities import START_NODE
 
 
@@ -43,7 +43,7 @@ class BettingGame:
             S[i].last_played_action: 'Check' or 'Call' or 'Bet' or 'Raise', showing The last played action that has led
              us to current node.
 
-    self.nodes: numpy.ndarray, list of public nodes
+    self.node: numpy.ndarray, list of public nodes
 
     self.next_node: numpy.ndarray, this np array makes moving from one state (public node) to its child easy and fast.
         i.e: self.next_node[i,j] shows the resulting node of taking action j at node i
@@ -84,19 +84,21 @@ class BettingGame:
         self.deck = deck
         self.deal_from_deck_with_substitution = deal_from_deck_with_substitution
 
-# ------------------------------------ Public Tree, States, Nodes, play, history ------------------------------------- #
+# ----------------------------------- Public: Tree, States, Nodes, play, history ------------------------------------- #
 
         self.public_tree = public_nodes_tree.PublicTree(START_NODE, self.max_number_of_bets)
-        self.nodes = self.public_tree.nodes
+        self.node = self.public_tree.nodes
         self.public_state = self.public_tree.create_PublicState_list()
         self.next_node = self.public_tree.create_next_node_table()
 
-        self.first_common_ancestors = np.array([[self.public_tree.common_ancestors(i, j)[-1] for i in self.nodes]
-                                                for j in self.nodes])
-        self.history_of_node = [self.public_tree.history_of_node(i) for i in self.nodes]
+        self.first_common_ancestors = np.array([[self.public_tree.common_ancestors(i, j)[-1] for i in self.node]
+                                                for j in self.node])
+        self.history_of_node = [self.public_tree.history_of_node(i) for i in self.node]
         self.decision_public_state = [self.public_state[i] for i in self.public_tree.decision_nodes]
+        self.terminal_public_state = [self.public_state[i] for i in self.node if self.public_state[i].is_terminal]
+        self.terminal_node = [self.node[i] for i in self.node if self.public_state[i].is_terminal]
 
-# --------------------------- Base namedtuple for Information and World States and Nodes ----------------------------- #
+# -------------------------- Base namedtuple for Information and World States and Nodes ----------------------------- #
 
         self.InfoNode = namedtuple('InfoNode' + str(self.max_number_of_bets), ['node', 'hand'])
         self.InfoState = namedtuple('InfoState' + str(self.max_number_of_bets), ['public_state', 'hand'])
@@ -110,39 +112,67 @@ class BettingGame:
         """ Creates a list, i'th element of list is self.InfoNode(node=i, hand=hand), namedtuple representation of info
             node corresponding to public node i holding the given hand. """
 
-        return [self.InfoNode(node=node, hand=hand) for node in self.nodes]
+        return [self.InfoNode(node=node, hand=hand) for node in self.node]
 
     def info_state(self, hand):
         """ Creates a list, i'th element of list is self.InfoState(public_state=self.public_state[i], hand=hand),
             namedtuple representation of info
             node corresponding to public node i holding the given hand """
         return [self.InfoState(public_state=self.public_state[node], hand=hand)
-                for node in self.nodes]
+                for node in self.node]
 
     def world_node(self, op_hand, ip_hand):
         """ Creates a list, i'th element of list is self.WorldNode(node=node, op_hand=op_hand, ip_hand=ip_hand),
             namedtuple representation of world node corresponding to public node i, players holding the given hands """
-        return [self.WorldNode(node=node, op_hand=op_hand, ip_hand=ip_hand) for node in self.nodes]
+        return [self.WorldNode(node=node, op_hand=op_hand, ip_hand=ip_hand) for node in self.node]
 
     def world_state(self, op_hand, ip_hand):
         """ Creates a list, i'th element of list is
             self.WorldState(public_state=self.public_state[i], op_hand=op_hand, ip_hand=ip_hand),
             namedtuple representation of world state corresponding to public state i holding the given hands """
         return [self.WorldState(public_state=self.public_state[node], op_hand=op_hand, ip_hand=ip_hand)
-                for node in self.nodes]
+                for node in self.node]
 
-# ---------------------------------------------------Other Methods---------------------------------------------------- #
+# ----------------------------------- STRATEGY AND VALUES INDUCED BY STRATEGY ---------------------------------------- #
+    def uniform_strategy(self):
+        S = np.zeros((len(self.deck.keys()), self.public_tree.number_of_nodes))
+        for i in range(len(self.deck.keys())):
+            for _decision_node in self.public_tree.decision_nodes:
+                for child in self.public_state[_decision_node].children:
+                    S[i, child] = 1 / len(self.public_state[_decision_node].children)
+        return S
+
+# ---------------------------------------------------OTHER METHODS---------------------------------------------------- #
+
+    def terminal_value(self, node, op_hand, ip_hand):
+        pot_multiplier = 1 + 2 * self.bet_size
+        np_node = self.public_tree.np_rep_of_nodes[node]
+        if np_node[0] > np_node[1]:
+            return pot_multiplier ** (np_node[1])
+        elif np_node[0] < np_node[1]:
+            return -pot_multiplier ** (np_node[0])
+        elif np_node[0] == np_node[1]:
+            if op_hand > ip_hand:
+                return pot_multiplier ** (np_node[0])
+            elif op_hand < ip_hand:
+                return -pot_multiplier ** (np_node[0])
+            else:
+                return 0
 
     def cards_dealing(self):
         number_of_cards = len(self.deck.keys())
         cards = []
+        deck_of_paired_cards = []
+        for key, value in self.deck.items():
+            for i in range(value):
+                cards.append(key)
         if self.deal_from_deck_with_substitution:
-            for key, value in self.deck.items():
-                for i in range(value):
-                    cards.append(key)
-        deck_of_paired_cards = list(product(cards, cards))
-        return deck_of_paired_cards
+            deck_of_paired_cards = list(product(cards, cards))
+        elif not self.deal_from_deck_with_substitution:
+            for index_one, index_two in permutations(range(len(cards)), 2):
+                deck_of_paired_cards.append((cards[index_one], cards[index_two]))
 
+        return deck_of_paired_cards
 
 
 # ------------------------------------ INITIALIZING BETTING GAMES WITH USUAL SIZES ----------------------------------- #
@@ -150,13 +180,15 @@ class BettingGame:
 # Start a Game
 if __name__ == '__main__':
     # Creating Kuhn Poker
-    J = 1; Q = 2; K = 3
+    J = 1;
+    Q = 2;
+    K = 3
     KUHN_BETTING_GAME = BettingGame(bet_size=0.5, max_number_of_bets=2,
                                     deck={J: 1, Q: 1, K: 1}, deal_from_deck_with_substitution=False)
-
+    K = KUHN_BETTING_GAME
     # Creating betting games with other sizes
-    max_number_of_bets = 12
-    G = BettingGame(max_number_of_bets)
+    max_n = 12
+    G = BettingGame(max_n)
     T = G.public_tree
     Play = G.next_node
     Pstate = G.public_state
@@ -165,5 +197,3 @@ if __name__ == '__main__':
     H = [G.public_tree.common_ancestors_table[i][i] for i in G.public_tree.nodes]
     AH = [G.public_tree.history_of_node(i) for i in G.public_tree.nodes]
     decision_states = [G.public_state[i] for i in G.public_tree.decision_nodes]
-
-
