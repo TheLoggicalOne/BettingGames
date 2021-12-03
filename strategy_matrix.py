@@ -20,12 +20,12 @@ from numpy.random import rand
 class StrategyMatrix:
     def __init__(self, game: bg.BettingGame):
         self.game = game
-        self.dim = len(self.game.nodes)
+        self.dim = len(self.game.node)
 
         self.csr_row_indices = self._csr_row_indices()
-        self.csr_col_indices = self.game.nodes
-        self.start = csr_matrix(np.array([[int(i == 0) for i in self.game.nodes]]))
-        self.diagonal_terminal = np.diag([int(self.game.public_state[i].is_terminal) for i in self.game.nodes])
+        self.csr_col_indices = self.game.node
+        self.start = csr_matrix(np.array([[int(i == 0) for i in self.game.node]]))
+        self.diagonal_terminal = np.diag([int(self.game.public_state[i].is_terminal) for i in self.game.node])
 
 # -------------------------------------- transition matrix of some basic strategies:---------------------------------- #
 
@@ -70,7 +70,7 @@ class StrategyMatrix:
 
     def uniform_csr_data(self):
         data = np.zeros(self.dim)
-        for i in self.game.nodes:
+        for i in self.game.node:
             if 1 <= i <= 4:
                 data[i] = 1 / 2
             elif self.dim - 4 <= i < self.dim:
