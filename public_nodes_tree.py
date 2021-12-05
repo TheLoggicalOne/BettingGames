@@ -176,3 +176,7 @@ if __name__ == '__main__':
     T2 = PublicTree(START_NODE, 2)
     NT2 = T2.create_PublicState_list()
     T10 = PublicTree(START_NODE, 10)
+# hamin safheye site shoma baes mishe system man ba cpu 16 core va behtarin watercooling 360mm dar arze yek saniye damash
+# az 40 daraje be 90 daraje berese....vaghean ahsant be tarah sitetoon....moshtari hamishegitoon hastam
+# va nemitoonam accountam ro tamdid konam
+#nemitoonam, sitetoon filtere, vpn man tamoom shode, va tanha systemi ke filtershekan dare farsi nadare
