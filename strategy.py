@@ -48,6 +48,7 @@ class Strategy:
                                                if self.game.public_state[node].first_played_action == 'Check'])
         self.bet_decision_branch = np.array([node for node in self.decision_node
                                              if self.game.public_state[node].first_played_action == 'Bet'])
+        self.type = [int(self.game.public_state[node].first_played_action == 'Bet') for node in self.game.node]
         self.op_turn_nodes = np.array([node for node in self.game.node if self.game.public_state[node].to_move == 0])
         self.ip_turn_nodes = np.array([node for node in self.game.node if self.game.public_state[node].to_move == 1])
         self.depth_of_node = self.game.depth_of_node
@@ -71,35 +72,38 @@ class Strategy:
         return np.hstack((self.strategy_base[position, :, 2:3],
                           self.strategy_base[position, :, 7:self.bet_decision_branch[-1] + 1:6]))
 
-    def reach_probs_of_check_decision_branch(self, position):
+    def player_reach_probs_of_check_decision_branch(self, position):
         """ return reach probability columns of decision nodes in check branch of game. First column corresponds to op
         first decision node  """
         return np.cumprod(self.check_branch_strategy(position), axis=1)
 
-    def reach_probs_of_bet_decision_branch(self, position):
+    def player_reach_probs_of_bet_decision_branch(self, position):
         return np.cumprod(self.bet_branch_strategy(position), axis=1)
 
-    def reach_probs_calc(self, node, position=None):
+    def player_reach_probs_calc(self, node, position=None):
         if position is None:
             position = self.reach_player[node]
         if self.game.public_state[node].first_played_action == 'Check':
             if self.is_decision_node[node]:
-                return self.reach_probs_of_check_decision_branch(position)[:,
+                return self.player_reach_probs_of_check_decision_branch(position)[:,
                        self.depth_of_node[node] - 1:self.depth_of_node[node]]
             else:
                 parent = self.parent[node]
-                return self.strategy_base[position, :, node:node + 1] * self.reach_probs_of_check_decision_branch(
+                return self.strategy_base[position, :, node:node + 1] * self.player_reach_probs_of_check_decision_branch(
                     position)[:, self.depth_of_node[parent] - 1:self.depth_of_node[parent]]
 
         else:
             if self.is_decision_node[node]:
-                return self.reach_probs_of_bet_decision_branch(position)[:,
+                return self.player_reach_probs_of_bet_decision_branch(position)[:,
                        self.depth_of_node[node] - 1:self.depth_of_node[node]]
             else:
                 parent = self.parent[node]
                 return self.strategy_base[position, :, node:node + 1] \
-                       * self.reach_probs_of_bet_decision_branch(position)[:,
+                       * self.player_reach_probs_of_bet_decision_branch(position)[:,
                          self.depth_of_node[parent] - 1:self.depth_of_node[parent]]
+
+    def total_reach_prob(self, node, hands):
+        return self.player_reach_probs_calc(node, 0)[hands[0]] * self.player_reach_probs_calc(node, 1)[hands[1]]
 
 # ----------------------------------- STRATEGY AND VALUES INDUCED BY STRATEGY ---------------------------------------- #
 
@@ -126,11 +130,11 @@ class Strategy:
 
 # Start a Game
 if __name__ == '__main__':
-    J = 1;
-    Q = 2;
-    K = 3
+    J = 0;
+    Q = 1;
+    K = 2
     KUHN_BETTING_GAME = BettingGame(bet_size=0.5, max_number_of_bets=2,
-                                    deck={J: 1, Q: 1, K: 1}, deal_from_deck_with_substitution=False)
+                                    deck={J: 0, Q: 1, K: 2}, deal_from_deck_with_substitution=False)
 
     K = KUHN_BETTING_GAME
     max_n = 12
@@ -139,4 +143,16 @@ if __name__ == '__main__':
     SK = Strategy(K)
     GK = Strategy(G)
     SK.strategy_base = SK.uniform_strategy()
+
+    # Testing
+    test_start = np.ones((2,3,9))
+    test_start[0, :, :] = np.array([[1,0.5,0.5,1,1,1,1,0.5,0.5],[1,0.9,0.1,1,1,1,1,0.7,0.3],
+                                    [1,0.05,0.95,1,1,1,1,0.1,0.9]])
+    test_start[1, :, :]= np.array([[1,1,1,0.6,0.4,0.2,0.8,1,1],[1,1,1,0.3,0.7,0.35,0.65,1,1],
+                                   [1,1,1,0.1,0.9,0.05,0.95,1,1]])
+
+    TS = Strategy(K, strategy_base=test_start)
+
+
+
 
