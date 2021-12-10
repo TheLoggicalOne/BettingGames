@@ -48,7 +48,7 @@ class Strategy:
                                                if self.game.public_state[node].first_played_action == 'Check'])
         self.bet_decision_branch = np.array([node for node in self.decision_node
                                              if self.game.public_state[node].first_played_action == 'Bet'])
-        self.type = [int(self.game.public_state[node].first_played_action == 'Bet') for node in self.game.node]
+        self.start_with_check = [self.game.public_state[node].first_played_action == 'Check' for node in self.game.node]
         self.op_turn_nodes = np.array([node for node in self.game.node if self.game.public_state[node].to_move == 0])
         self.ip_turn_nodes = np.array([node for node in self.game.node if self.game.public_state[node].to_move == 1])
         self.depth_of_node = self.game.depth_of_node
@@ -80,10 +80,8 @@ class Strategy:
     def player_reach_probs_of_bet_decision_branch(self, position):
         return np.cumprod(self.bet_branch_strategy(position), axis=1)
 
-    def player_reach_probs_calc(self, node, position=None):
-        if position is None:
-            position = self.reach_player[node]
-        if self.game.public_state[node].first_played_action == 'Check':
+    def player_reach_probs(self, node, position):
+        if self.start_with_check[node]:
             if self.is_decision_node[node]:
                 return self.player_reach_probs_of_check_decision_branch(position)[:,
                        self.depth_of_node[node] - 1:self.depth_of_node[node]]
@@ -102,9 +100,23 @@ class Strategy:
                        * self.player_reach_probs_of_bet_decision_branch(position)[:,
                          self.depth_of_node[parent] - 1:self.depth_of_node[parent]]
 
-    def total_reach_prob(self, node, hands):
-        return self.player_reach_probs_calc(node, 0)[hands[0]] * self.player_reach_probs_calc(node, 1)[hands[1]]
+    def player_reach_prob_table(self):
+        PR = np.ones((2, self.number_of_hands, self.number_of_nodes))
+        for i in range(2):
+            for node in self.game.node:
+                PR[i:i + 1, :, node] = self.player_reach_probs(node, i)
+        return PR
 
+    def reach_prob(self, node, hands):
+        return self.player_reach_probs(node, 0)[hands[0]] * self.player_reach_probs(node, 1)[hands[1]]
+
+    def reach_prob_table(self):
+        R = np.ones((self.number_of_nodes, self.number_of_hands, self.number_of_hands))
+        for op_hand in range(self.number_of_hands):
+            for ip_hand in range(self.number_of_hands):
+                for node in self.game.node:
+                    R[node, op_hand, ip_hand] = self.reach_prob(node, [op_hand, ip_hand])
+        return R
 # ----------------------------------- STRATEGY AND VALUES INDUCED BY STRATEGY ---------------------------------------- #
 
     def uniform_strategy(self):
@@ -122,7 +134,7 @@ class Strategy:
             for _decision_node in self.decision_node:
                 childs = self.game.public_state[_decision_node].children
                 for child in childs:
-                    S[self.reach_player[_decision_node], i, child:child + 1] = action_prob_function(i, child)
+                    S[self.turn[_decision_node], i, child:child + 1] = action_prob_function(i, child)
         return S
 
 
@@ -138,12 +150,13 @@ if __name__ == '__main__':
 
     K = KUHN_BETTING_GAME
     max_n = 12
-    G = BettingGame(max_n)
+    G = BettingGame(bet_size=1, max_number_of_bets=max_n,
+                                    deck={i:1 for i in range(5)}, deal_from_deck_with_substitution=True)
 
     SK = Strategy(K)
     GK = Strategy(G)
     SK.strategy_base = SK.uniform_strategy()
-
+    GK.strategy_base = GK.uniform_strategy()
     # Testing
     test_start = np.ones((2,3,9))
     test_start[0, :, :] = np.array([[1,0.5,0.5,1,1,1,1,0.5,0.5],[1,0.9,0.1,1,1,1,1,0.7,0.3],
