@@ -103,8 +103,8 @@ class Strategy:
     def player_reach_prob_table(self):
         PR = np.ones((2, self.number_of_hands, self.number_of_nodes))
         for i in range(2):
-            for node in self.game.node:
-                PR[i:i + 1, :, node] = self.player_reach_probs(node, i)
+            for node in self.game.node[1:] :
+                PR[i, :, node:node+1] = self.player_reach_probs(node, i)
         return PR
 
     def reach_prob(self, node, hands):
@@ -114,7 +114,7 @@ class Strategy:
         R = np.ones((self.number_of_nodes, self.number_of_hands, self.number_of_hands))
         for op_hand in range(self.number_of_hands):
             for ip_hand in range(self.number_of_hands):
-                for node in self.game.node:
+                for node in self.game.node[1:]:
                     R[node, op_hand, ip_hand] = self.reach_prob(node, [op_hand, ip_hand])
         return R
 # ----------------------------------- STRATEGY AND VALUES INDUCED BY STRATEGY ---------------------------------------- #
