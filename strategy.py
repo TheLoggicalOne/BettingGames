@@ -35,6 +35,7 @@ class Strategy:
             strategy_base = np.ones((2, self.number_of_hands, self.number_of_nodes))
         self.strategy_base = strategy_base
 
+        self.node = self.game.node
         self.decision_node = self.game.decision_node
         self.is_decision_node = [not self.game.public_state[i].is_terminal for i in self.game.node]
         self.check_decision_branch = np.array([node for node in self.decision_node
@@ -49,7 +50,10 @@ class Strategy:
         self.reach_player = [1 - (self.depth_of_node[i] % 2) for i in self.game.node]
         self.parent = self.game.parent
 
+        self.terminal_values_all_nodes = self.game.terminal_values_all_node.copy()
+
 # ---------------------------- MAIN METHODS: REACH PROBABILITIES OF GIVEN STRATEGY  ---------------------------------- #
+
     # even cols are op cols
     def check_branch_strategy(self, position):
         """ return strategy columns of decision nodes in check branch of game.
@@ -112,6 +116,37 @@ class Strategy:
                 for node in self.game.node[1:]:
                     R[node, op_hand, ip_hand] = self.reach_prob(node, [op_hand, ip_hand])
         return R
+
+# ---------------------------------- MAIN METHODS: EVALUATION OF GIVEN STRATEGY -------------------------------------- #
+
+    def world_node_strategic_evaluation(self):
+
+        # word_state_values[op_hand, ip_hand, public_node] induced by given strategy are going to be stored in this
+        # matrix, values at terminal states are computed already
+        number_of_hands = self.number_of_hands
+        world_state_values = self.terminal_values_all_nodes.copy()
+        given_strategy = self.strategy_base[0, :, :] * self.strategy_base[1, :, :]
+        # world_state_value[ , , t.parent] += world_state_value[ , , t]**strategy[ , t]
+        nonzero_nodes = self.node[1:]
+        reverse_node_list = nonzero_nodes[::-1]
+
+        for current_node in reverse_node_list:
+            current_player = self.turn[current_node]
+            parent_node = self.parent[current_node]
+            parent_node_player = 1 - current_player
+
+            # if parent_node player is op we multiply rows of value matrix
+            if parent_node_player == 0:
+                world_state_values[:, :, parent_node] += (
+                        world_state_values[:, :, current_node] * (
+                    given_strategy[:, current_node].reshape(number_of_hands, 1)))
+
+            # else if parent_node player is ip we multiply cols of value matrix
+            elif parent_node_player == 1:
+                world_state_values[:, :, parent_node] += (
+                        world_state_values[:, :, current_node] * given_strategy[:, current_node])
+
+        return world_state_values
 
 # ----------------------------- STRATEGY INITIALIZING TOOLS AND SPECIFIC STRATEGIES ---------------------------------- #
 
