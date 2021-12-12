@@ -1,3 +1,11 @@
+# ---------------------------------------------- STATE OF THIS CODE -------------------------------------------------- #
+# STATUS OF CURRENTS CODES: works perfectly, except possibly uniform_strategy and all_raise_strategy
+# their working version is in strategy.py anyway
+
+# FUTURE PLAN: just adding last few changes to documentation
+
+# DOCUMENTATION: very good, just should add few last changes
+# -------------------------------------------------------------------------------------------------------------------- #
 """ This module can be seen as Betting Game API. Here  we can create Betting Games with different specification
 parameters. Betting Game Is a simplified model for one street of betting in poker. For more information about betting
 game see the ReadMe.md or the article. For general definition and description of the game see ReadMe-Game Description,
