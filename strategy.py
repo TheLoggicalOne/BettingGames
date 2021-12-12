@@ -58,6 +58,7 @@ class Strategy:
 
         self.terminal_values_all_nodes = self.game.terminal_values_all_node.copy()
 
+        self.chance_reach_prob = self.game.deck_matrix()
 # ---------------------------- MAIN METHODS: REACH PROBABILITIES OF GIVEN STRATEGY  ---------------------------------- #
 
     # even cols are op cols
@@ -76,59 +77,101 @@ class Strategy:
         return np.hstack((self.strategy_base[position, :, 2:3],
                           self.strategy_base[position, :, 7:self.bet_decision_branch[-1] + 1:6]))
 
-    def player_reach_probs_of_check_decision_branch(self, position):
+    def player_reach_probs_of_check_decision_branch_indo_nodes(self, position):
         """ return reach probability columns of decision nodes in check branch of game. First column corresponds to op
         first decision node  """
         return np.cumprod(self.check_branch_strategy(position), axis=1)
 
-    def player_reach_probs_of_bet_decision_branch(self, position):
+    def player_reach_probs_of_bet_decision_branch_info_nodes(self, position):
         return np.cumprod(self.bet_branch_strategy(position), axis=1)
 
-    def player_reach_probs(self, node, position):
-        if self.start_with_check[node]:
+    def player_reach_probs_of_info_node(self, node, position):
+        """ returns (self.number_of_hands)*1 numpy array where row i corresponds to info node(hand=i, node)"""
+        if node == 0:
+            PRN = np.ones((self.number_of_hands, 1))
+        elif self.start_with_check[node]:
             if self.is_decision_node[node]:
-                return self.player_reach_probs_of_check_decision_branch(position)[:,
+                return self.player_reach_probs_of_check_decision_branch_indo_nodes(position)[:,
                        self.depth_of_node[node] - 1:self.depth_of_node[node]]
             else:
                 parent = self.parent[node]
-                return self.strategy_base[position, :,
-                       node:node + 1] * self.player_reach_probs_of_check_decision_branch(
+                PRN = self.strategy_base[position, :,
+                       node:node + 1] * self.player_reach_probs_of_check_decision_branch_indo_nodes(
                     position)[:, self.depth_of_node[parent] - 1:self.depth_of_node[parent]]
 
         else:
             if self.is_decision_node[node]:
-                return self.player_reach_probs_of_bet_decision_branch(position)[:,
+                PRN = self.player_reach_probs_of_bet_decision_branch_info_nodes(position)[:,
                        self.depth_of_node[node] - 1:self.depth_of_node[node]]
             else:
                 parent = self.parent[node]
-                return self.strategy_base[position, :, node:node + 1] \
-                       * self.player_reach_probs_of_bet_decision_branch(position)[:,
+                PRN = self.strategy_base[position, :, node:node + 1] \
+                       * self.player_reach_probs_of_bet_decision_branch_info_nodes(position)[:,
                          self.depth_of_node[parent] - 1:self.depth_of_node[parent]]
+        return PRN
 
-    def player_reach_prob_table(self):
+    def players_reach_probs_of_info_nodes_table(self):
+        """ returns 2*(self.number_of_hands)*(self.number_of_nodes) numpy array """
         PR = np.ones((2, self.number_of_hands, self.number_of_nodes))
         for i in range(2):
-            for node in self.game.node[1:]:
-                PR[i, :, node:node + 1] = self.player_reach_probs(node, i)
+            for node in self.node[1:]:
+                PR[i, :, node:node + 1] = self.player_reach_probs_of_info_node(node, i)
         return PR
 
-    def reach_prob(self, node, hands):
-        return self.player_reach_probs(node, 0)[hands[0]] * self.player_reach_probs(node, 1)[hands[1]]
+    def cf_reach_probs_of_world_nodes_table(self, position):
+        """ returns (self.number_of_hands)*(self.number_of_hands)*(self.number_of_nodes) numpy array """
 
-    def reach_prob_table(self):
-        R = np.ones((self.number_of_nodes, self.number_of_hands, self.number_of_hands))
+        if position == 0:
+            reach_of_info_nodes_table = self.players_reach_probs_of_info_nodes_table()[1:2, :, :]
+            OR = np.broadcast_to(reach_of_info_nodes_table,
+                                 (self.number_of_hands, self.number_of_hands, self.number_of_nodes))
+        else:
+            reach_of_info_nodes_table = self.players_reach_probs_of_info_nodes_table()[0:1, :, :].reshape(3, 1, 9)
+            OR = np.broadcast_to(reach_of_info_nodes_table,
+                                 (self.number_of_hands, self.number_of_hands, self.number_of_nodes))
+        return OR
+
+    def reach_prob_of_world_node(self, node, hands):
+        """ returns a single real number, which is reach probability of both players( multiplied, no chance probs) """
+        return self.player_reach_probs_of_info_node(node, 0)[hands[0]] * self.player_reach_probs_of_info_node(node, 1)[hands[1]]
+
+    def reach_prob__of_world_node_with_chance(self, node, hands):
+        """ returns a single real number, which is real total reach probability of given world node """
+        return self.player_reach_probs_of_info_node(node, 0)[hands[0]
+               ] * self.player_reach_probs_of_info_node(node, 1)[hands[1]] * self.chance_reach_prob[hands[0], hands[1]]
+
+    def reach_probs_of_world_nodes_table(self):
+        """ returns (self.number_of_hands)*(self.number_of_hands)*(self.number_of_nodes) numpy array """
+        R = np.ones(( self.number_of_hands, self.number_of_hands, self.number_of_nodes))
         for op_hand in range(self.number_of_hands):
             for ip_hand in range(self.number_of_hands):
                 for node in self.game.node[1:]:
-                    R[node, op_hand, ip_hand] = self.reach_prob(node, [op_hand, ip_hand])
+                    R[ op_hand, ip_hand, node,] = self.reach_prob_of_world_node(node, [op_hand, ip_hand])
         return R
+
+    def reach_probs_of_world_nodes_with_chance_table(self):
+        """ returns (self.number_of_hands)*(self.number_of_hands)*(self.number_of_nodes) numpy array """
+        R = np.ones((self.number_of_hands, self.number_of_hands, self.number_of_nodes))
+        R[:, :, 0] = self.chance_reach_prob.copy()
+        for op_hand in range(self.number_of_hands):
+            for ip_hand in range(self.number_of_hands):
+                for node in self.game.node[1:]:
+                    R[op_hand, ip_hand, node] = self.reach_prob__of_world_node_with_chance(node, [op_hand, ip_hand])
+        return R
+
+    # this ignore your hand! and it is only true for games with independent card dealing from deck
+#   def opponents_reach_probs_table_ignorant(self):
+#       OR = np.ones((2, self.number_of_hands, self.number_of_nodes))
+#       for i in range(2):
+#           for node in self.node[1:]:
+#               OR[i, :, node:node + 1] = self.player_reach_probs(node, 1-i)*self.chance_reach_prob[:, 0:1]
+#       return OR
 
 # ---------------------------------- MAIN METHODS: EVALUATION OF GIVEN STRATEGY -------------------------------------- #
 
-    def world_node_strategic_evaluation(self):
+    def values_of_world_nodes_table(self):
+        """ returns (self.number_of_hands)*(self.number_of_hands)*(self.number_of_nodes) numpy array """
 
-        # word_state_values[op_hand, ip_hand, public_node] induced by given strategy are going to be stored in this
-        # matrix, values at terminal states are computed already
         number_of_hands = self.number_of_hands
         world_state_values = self.terminal_values_all_nodes.copy()
         given_strategy = self.strategy_base[0, :, :] * self.strategy_base[1, :, :]
@@ -153,6 +196,27 @@ class Strategy:
                         world_state_values[:, :, current_node] * given_strategy[:, current_node])
 
         return world_state_values
+
+    def cf_value_world_nodes_table(self, position):
+        """ returns (self.number_of_hands)*(self.number_of_hands)*(self.number_of_nodes) numpy array """
+        return self.cf_reach_probs_of_world_nodes_table(position) * self.values_of_world_nodes_table()
+
+    # free of chance players probs
+    def cf_value_of_info_node(self,  hand, node, player=None):
+        """ returns a single real number, which is cf value of given info node, for the given player"""
+        if player is None:
+            player = self.turn[node]
+        if player == 0:
+            return np.sum(
+                self.values_of_world_nodes_table()[hand, :, node][:, np.newaxis] * self.player_reach_probs_of_info_node(node, 1))
+        elif player == 1:
+            return np.sum(
+                self.values_of_world_nodes_table()[:, hand, node][:, np.newaxis] * self.player_reach_probs_of_info_node(node, 0))
+
+    def cf_regret_of_info_node(self, hand, node, child):
+        """ returns a single real number, which is cf value of given info node, for the given player"""
+        position = self.turn[node]
+        return self.cf_value_of_info_node(hand, child, position)-self.cf_value_of_info_node(hand, node, position)
 
 # ----------------------------- STRATEGY INITIALIZING TOOLS AND SPECIFIC STRATEGIES ---------------------------------- #
 
@@ -183,17 +247,18 @@ if __name__ == '__main__':
     Q = 1;
     K = 2
     KUHN_BETTING_GAME = BettingGame(bet_size=0.5, max_number_of_bets=2,
-                                    deck={J: 0, Q: 1, K: 2}, deal_from_deck_with_substitution=False)
+                                    deck={J: 1, Q: 1, K: 1}, deal_from_deck_with_substitution=False)
 
-    K = KUHN_BETTING_GAME
+    KK = KUHN_BETTING_GAME
     max_n = 12
     G = BettingGame(bet_size=1, max_number_of_bets=max_n,
                     deck={i: 1 for i in range(5)}, deal_from_deck_with_substitution=True)
 
-    SK = Strategy(K)
+    SK = Strategy(KK)
     GK = Strategy(G)
     SK.strategy_base = SK.uniform_strategy()
     GK.strategy_base = GK.uniform_strategy()
+
     # Testing
     test_start = np.ones((2, 3, 9))
     test_start[0, :, :] = np.array([[1, 0.5, 0.5, 1, 1, 1, 1, 0.5, 0.5], [1, 0.9, 0.1, 1, 1, 1, 1, 0.7, 0.3],
@@ -201,4 +266,15 @@ if __name__ == '__main__':
     test_start[1, :, :] = np.array([[1, 1, 1, 0.6, 0.4, 0.2, 0.8, 1, 1], [1, 1, 1, 0.3, 0.7, 0.35, 0.65, 1, 1],
                                     [1, 1, 1, 0.1, 0.9, 0.05, 0.95, 1, 1]])
 
-    TS = Strategy(K, strategy_base=test_start)
+    TS = Strategy(KK, strategy_base=test_start)
+    V_TS = TS.values_of_world_nodes_table()
+    sr = TS.reach_probs_of_world_nodes_table()
+    sr_cf = TS.cf_reach_probs_table()
+    KKK = BettingGame(bet_size=0.5, max_number_of_bets=2,
+                                    deck={0: 1, 1: 1, 2: 1}, deal_from_deck_with_substitution=False)
+    ttest_start = np.ones((2, 3, 9))
+    ttest_start[0, :, :] = np.array([[1, 0.5, 0.5, 1, 1, 1, 1, 0.5, 0.5], [1, 0.9, 0.1, 1, 1, 1, 1, 0.7, 0.3],
+                                    [1, 0.05, 0.95, 1, 1, 1, 1, 0.1, 0.9]])
+    ttest_start[1, :, :] = np.array([[1, 1, 1, 0.6, 0.4, 0.2, 0.8, 1, 1], [1, 1, 1, 0.3, 0.7, 0.35, 0.65, 1, 1],
+                                    [1, 1, 1, 0.1, 0.9, 0.05, 0.95, 1, 1]])
+    TTS = Strategy(KKK, strategy_base=ttest_start)
