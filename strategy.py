@@ -1,4 +1,10 @@
-# TO BE COMPLETED but all current codes work perfectly
+# ---------------------------------------------- STATE OF THIS CODE -------------------------------------------------- #
+# STATUS OF CURRENTS CODES: works perfectly, possible speed improvement
+#
+# FUTURE PLAN: 1) possibly combining valuation and reach prob calculation( they seem to have common computation)
+#              2)
+# DOCUMENTATION: 20%
+# -------------------------------------------------------------------------------------------------------------------- #
 import numpy as np
 from betting_games import BettingGame
 
