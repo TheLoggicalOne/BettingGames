@@ -190,6 +190,22 @@ class BettingGame:
 
         return deck_of_paired_cards
 
+    def deck_matrix(self):
+        n_cards = len(self.deck.keys())
+        matrix = np.ones((n_cards, n_cards))
+        for i in range(n_cards):
+            for j in range(n_cards):
+                matrix[i, j] = self.deck[i]-((1-int(self.deal_from_deck_with_substitution))*(i == j))
+        return matrix/np.sum(matrix)
+
+# implementation of deck_matrix using np.fromfunction did not work for some reason
+#   def deck_matrix(self):
+#       n_cards = len(self.deck.keys())
+#       M = np.fromfunction(
+#           lambda i, j: self.deck[i]-((1-int(self.deal_from_deck_with_substitution))*(i == j)), (n_cards, n_cards),
+#           dtype=float)
+#       return M/(np.sum(M))
+
 # ---------------------------------------Information and World States and Nodes -------------------------------------- #
 
     def info_node(self, hand):
@@ -223,12 +239,15 @@ class BettingGame:
 # Start a Game
 if __name__ == '__main__':
     # Creating Kuhn Poker
-    J = 1;
-    Q = 2;
-    K = 3
+    J = 0;
+    Q = 1;
+    K = 2
     KUHN_BETTING_GAME = BettingGame(bet_size=0.5, max_number_of_bets=2,
                                     deck={J: 1, Q: 1, K: 1}, deal_from_deck_with_substitution=False)
     K = KUHN_BETTING_GAME
     # Creating betting games with other sizes
     max_n = 12
     G = BettingGame(max_n)
+    dm = K.deck_matrix()
+
+
