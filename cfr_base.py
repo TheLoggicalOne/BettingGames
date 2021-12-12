@@ -3,8 +3,8 @@ Basics components of counterfactual regret minimization algorithms: definition a
 
     Strategy
     Reach Probabilities
-    Utilities
-    Counterfactual Utilities
+    Utilities( or values)
+    Counterfactual Utilities( or values)
     Regret
 
     Note that everything we need can be computed from reach probability and utilities.
