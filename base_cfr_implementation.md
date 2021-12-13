@@ -38,3 +38,6 @@ multiplied by:
 `cf_regret[op_hand, node, child] = cfv[op_hand, :, child]-cfv[op_hand, :, node]`  
 `= (V[op_hand, :, child]-V[op_hand, :, node])*R[op_hand,:,node]  `
 
+**Can we Also say**:
+`cf_regret[op_hand, node, child] = cfv[op_hand, :, child]-cfv[op_hand, :, node]`  
+`= (V[op_hand, :, child]-V[op_hand, :, node])*R[op_hand,:,node]  `
