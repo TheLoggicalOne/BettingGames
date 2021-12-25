@@ -169,7 +169,8 @@ class Strategy:
             OR = np.broadcast_to(reach_of_info_nodes_table,
                                  (self.number_of_hands, self.number_of_hands, self.number_of_nodes))
         else:
-            reach_of_info_nodes_table = self.players_reach_probs_of_info_nodes_table_with_update()[0:1, :, :].reshape(3, 1, 9)
+            reach_of_info_nodes_table = self.players_reach_probs_of_info_nodes_table_with_update()[0:1, :, :].reshape(
+                self.number_of_hands, 1, self.number_of_nodes)
             OR = np.broadcast_to(reach_of_info_nodes_table,
                                  (self.number_of_hands, self.number_of_hands, self.number_of_nodes))
         return OR
@@ -398,6 +399,7 @@ class Strategy:
         avg_time_per_1000 = duration/(number_of_iterations/1000)
         return avg_time_per_1000
 
+
 # -------------------------------------------------------------------------------------------------------------------- #
 # ----------------------------- STRATEGY INITIALIZING TOOLS AND SPECIFIC STRATEGIES ---------------------------------- #
 
@@ -454,27 +456,63 @@ if __name__ == '__main__':
 
     KKK = BettingGame(bet_size=0.5, max_number_of_bets=2,
                       deck={0: 1, 1: 1, 2: 1}, deal_from_deck_with_substitution=False)
+
+    Kb1max4 = BettingGame(bet_size=1, max_number_of_bets=4,
+                            deck={0: 1, 1: 1, 2: 1}, deal_from_deck_with_substitution=False)
+
+    s = Strategy(Kb1max4)
+
     ttest_start = np.ones((2, 3, 9))
     ttest_start[0, :, :] = np.array([[1, 0.5, 0.5, 1, 1, 1, 1, 0.5, 0.5], [1, 0.9, 0.1, 1, 1, 1, 1, 0.7, 0.3],
                                      [1, 0.05, 0.95, 1, 1, 1, 1, 0.1, 0.9]])
     ttest_start[1, :, :] = np.array([[1, 1, 1, 0.6, 0.4, 0.2, 0.8, 1, 1], [1, 1, 1, 0.3, 0.7, 0.35, 0.65, 1, 1],
                                      [1, 1, 1, 0.1, 0.9, 0.05, 0.95, 1, 1]])
-    TTS = Strategy(KKK, strategy_base=ttest_start)
-    V = TTS.values_of_world_nodes_table()
-    R = TTS.cf_reach_probs_of_world_nodes_table(1)
-    CFV = TTS.cf_value_world_nodes_table(1)
-    CFV_inf = TTS.cf_values_of_info_nodes_of_decision_player_table()
-    cf_regret_0 = TTS.cumulative_regret[0, :, :].copy()
-    cf_regret_1 = TTS.cumulative_regret[1, :, :].copy()
-    np.set_printoptions(precision=None, threshold=None, edgeitems=None, linewidth=300, suppress=None, nanstr=None,
 
-                        infstr=None, formatter=None, sign=None, floatmode=None, legacy=None)
+    SK = Strategy(KKK)
+    SK.strategy_base = SK.uniform_strategy()
+    SK.players_reach_probs_of_info_nodes_table_with_update()
+    # cf_value_w_0 = SK.cf_value_world_nodes_table(0)
+    # cf_value_i_0 = SK.cf_values_of_info_nodes_table(0)
+    # cf_regret_i_0 =SK.cf_regrets_of_of_info_nodes_table(0)
 
-    TTS.run_base_cfr(10000)
-    avg100000 = TTS.average_strategy()
-   # TTS.cumulative_regret
-   # TTS.strategy_base
 
-   # TTS.update_cumulative_regrets()
-   # TTS.update_strategy()
+    # SK.update_cumulative_regrets()
+
+
+
+    #TTS = Strategy(KKK, strategy_base=ttest_start)
+    #V = TTS.values_of_world_nodes_table()
+    #R = TTS.cf_reach_probs_of_world_nodes_table(1)
+    #CFV = TTS.cf_value_world_nodes_table(1)
+    #CFV_inf = TTS.cf_values_of_info_nodes_of_decision_player_table()
+    #cf_regret_0 = TTS.cumulative_regret[0, :, :].copy()
+    #cf_regret_1 = TTS.cumulative_regret[1, :, :].copy()
+    #np.set_printoptions(precision=None, threshold=None, edgeitems=None, linewidth=300, suppress=None, nanstr=None,
+#
+    #                    infstr=None, formatter=None, sign=None, floatmode=None, legacy=None)
+#
+    #TTS.run_base_cfr(100000)
+    #avgTTS100000 = TTS.average_strategy()
+    #kkk = BettingGame(bet_size=0.5, max_number_of_bets=2,
+    #                  deck={0: 1, 1: 1, 2: 1}, deal_from_deck_with_substitution=False)
+    #TTS10000 = Strategy(kkk, strategy_base=avgTTS100000)
+    #t=TTS10000
+    #t.update_cumulative_regrets()
+    #tv = t.values_of_world_nodes_table()
+    #game_values_of_chance_nodes = tv[:, :, 0]
+    #gtv = game_values_of_chance_nodes
+    #np.sum(gtv)/6
+    #t.run_base_cfr(9999)
+    #avgt10000 = t.average_strategy()
+#
+    #TTS.run_base_cfr(10000)
+    #avgTTS20000 = TTS.average_strategy()
+    #tt = Strategy(kkk, strategy_base=avgt10000)
+    #tt.run_base_cfr(80000)
+    # TTS.cumulative_regret
+    #avgtt80000=tt.average_strategy()
+    # TTS.strategy_base
+
+    # TTS.update_cumulative_regrets()
+    # TTS.update_strategy()
 
